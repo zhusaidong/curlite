@@ -1,0 +1,13 @@
+{
+    "name": "zhusaidong/curlite",
+    "description": "a Light-weight php curl",
+    "type": "project",
+    "license": "BSD",
+    "authors": [
+        {
+            "name": "zhusaidong",
+            "email": "635925926@qq.com"
+        }
+    ],
+    "require": {}
+}
