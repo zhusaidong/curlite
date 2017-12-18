@@ -5,10 +5,16 @@
 ## About
 ### a Light-weight php curl
 
+## Useful
+
+```
+composer require zhusaidong/curlite:dev-master
+```
+
 ## Examples
 
 ```php
-require_once('../src/CurLite.php');
+require_once './vendor/autoload.php';
 
 use CurLite\Request,
 	CurLite\Curl;

@@ -3,7 +3,7 @@
 * CurlLite demo
 * @author Zsdroid [635925926@qq.com]
 */
-require_once('../src/CurLite.php');
+require_once './vendor/autoload.php';
 
 use CurLite\Request,
 	CurLite\Curl;
