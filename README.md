@@ -5,7 +5,7 @@
 ## About
 ### a Light-weight php curl
 
-## Useful
+## Usage
 
 ```
 composer require zhusaidong/curlite:dev-master
