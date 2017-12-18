@@ -35,7 +35,7 @@ class Curl
 	*/
 	private function isSupported()
 	{
-		return function_exists("curl_init")?TRUE:FALSE;
+		return function_exists("curl_init") ? TRUE : FALSE;
 	}
 	
 	/**
@@ -145,7 +145,7 @@ class Request
 	*/
 	public $method = self::METHOD_GET;
 	/**
-	* @var $postFields post数据
+	* @var $postFields post data
 	*/
 	public $postFields = '';
 	/**
@@ -175,8 +175,8 @@ class Request
 	
 	/**
 	* __construct
-	* @param string $requestUrl 请求地址
-	* @param string $requestMethod 请求方式
+	* @param string $requestUrl Request Url 
+	* @param string $requestMethod Request Method
 	*/
 	public function __construct($requestUrl,$requestMethod = self::METHOD_GET)
 	{
@@ -184,7 +184,7 @@ class Request
 		$this->method = $requestMethod;
 	}
 	/**
-	* 获取随机IP
+	* get Random IP
 	*/
 	public function getRandomIP()
 	{
@@ -194,7 +194,7 @@ class Request
 		$ipArr[] = rand(60, 255);
 		$ipArr[] = rand(60, 255);
 		$ip = implode('.',$ipArr);
-		//验证ip
+		//validate ip
 		while(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === FALSE)
 		{
 			$ip = $this->getRandomIP();
@@ -234,7 +234,7 @@ class Response
 	public $error = '';
 	
 	/**
-	* 解析header
+	* parse header
 	* 
 	* @return Response
 	*/
@@ -250,7 +250,7 @@ class Response
 		return $this;
 	}
 	/**
-	* 解析cookie
+	* parse cookie
 	* 
 	* @return Response
 	*/
