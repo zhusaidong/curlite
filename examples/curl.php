@@ -8,9 +8,16 @@ require_once './vendor/autoload.php';
 use CurLite\Request,
 	CurLite\Curl;
 
-$request = new Request('http://www.baidu.com/s');
-$request->postFields = ['wd'=>'php curl'];
-$request->referer = 'http://www.baidu.com/';
+$request = new Request('https://github.com/search');
+$request->postFields = ['q'=>'php curl','type'=>''];
+$request->referer = 'https://github.com/';
 $cl = new Curl($request);
 $response = $cl->getResponse();
-echo $response->body;
+if($response->error === FALSE)
+{
+	echo $response->body;
+}
+else
+{
+	echo 'error:'.$response->error;
+}

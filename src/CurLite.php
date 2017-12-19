@@ -2,7 +2,7 @@
 /**
 * CurLite
 * @author Zsdroid [635925926@qq.com]
-* @version 1.0
+* @version 0.1.1
 */
 namespace CurLite;
 
@@ -52,33 +52,28 @@ class Curl
 	*/
 	private function curlExec()
 	{
-		if($this->request->isRandomIP)
-		{
-			$ip = $this->request->getRandomIP();
-			$this->request->header['CLIENT-IP'] = $ip;
-			$this->request->header['X-FORWARDED-FOR'] = $ip;
-		}
 		$curl = curl_init();
 		
-		$url = $this->request->url;
-		$postFields = $this->request->postFields;
-		$postFields = is_array($postFields)?http_build_query($postFields):$postFields;
-		$caPath = $this->request->caPath;
+		//avoid variable pollution
+		$request = clone $this->request;
+		
+		$this->request->isRandomIP == TRUE and $request->header['CLIENT-IP'] = $request->header['X-FORWARDED-FOR'] = $this->request->getRandomIP();
+		$request->postFields = is_array($request->postFields) ? http_build_query($request->postFields) : $request->postFields;
 		
 		if($this->request->method === Request::METHOD_POST)
 		{
 			curl_setopt($curl, CURLOPT_POST, 1);
-			curl_setopt($curl, CURLOPT_POSTFIELDS, $postFields);
+			curl_setopt($curl, CURLOPT_POSTFIELDS, $request->postFields);
 		}
 		else
 		{
 			curl_setopt($curl, CURLOPT_HTTPGET, 1);
-			$url .= (strpos('?',$url) !== FALSE?'&':'?').$postFields;
-		} 
-		curl_setopt($curl, CURLOPT_URL,$url);
-		if(!empty($caPath))
+			$request->url .= (strpos('?',$request->url) !== FALSE ? '&' : '?').$request->postFields;
+		}
+		curl_setopt($curl, CURLOPT_URL,$request->url);
+		if(!empty($request->caPath))
 		{
-			$caPathInfo = pathinfo($caPath);
+			$caPathInfo = pathinfo($request->caPath);
 			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, TRUE);
 			curl_setopt($curl, CURLOPT_CAPATH, $caPathInfo['dirname']);
 			curl_setopt($curl, CURLOPT_CAINFO, $caPathInfo['basename']);
@@ -88,14 +83,15 @@ class Curl
 			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
 		}
 		
-		curl_setopt($curl, CURLOPT_HTTPHEADER,$this->request->header);
-		curl_setopt($curl, CURLOPT_USERAGENT, $this->request->userAgent);
-		curl_setopt($curl, CURLOPT_REFERER, $this->request->referer);
-		curl_setopt($curl, CURLOPT_COOKIE, $this->request->cookie);
+		curl_setopt($curl, CURLOPT_HTTPHEADER,$request->header);
+		curl_setopt($curl, CURLOPT_USERAGENT, $request->userAgent);
+		curl_setopt($curl, CURLOPT_REFERER, $request->referer);
+		curl_setopt($curl, CURLOPT_COOKIE, $request->cookie);
+		curl_setopt($curl, CURLOPT_TIMEOUT, $request->timeout);
+		
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 1);
 		curl_setopt($curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_DEFAULT);
-		curl_setopt($curl, CURLOPT_TIMEOUT, 10);
 		
 		//get response header
 		$that = $this;
@@ -111,6 +107,8 @@ class Curl
 		if($result !== FALSE)
 		{
 			$this->response->body = $result;
+			//if curl successed, the `response->error` will equal `FALSE`.
+			$this->response->error = FALSE;
 		}
 		else
 		{
@@ -163,7 +161,7 @@ class Request
 	/**
 	* @var $userAgent USER-AGENT
 	*/
-	public $userAgent = 'Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)';
+	public $userAgent = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36';
 	/**
 	* @var $isRandomIP randomIP
 	*/
@@ -172,6 +170,10 @@ class Request
 	* @var $caPath ca file path
 	*/
 	public $caPath = '';
+	/**
+	* @var $timeout timeout
+	*/
+	public $timeout = 3;
 	
 	/**
 	* __construct
@@ -189,10 +191,10 @@ class Request
 	public function getRandomIP()
 	{
 		$ipArr = [];
-		$ipArr[] = rand(60, 255);
-		$ipArr[] = rand(60, 255);
-		$ipArr[] = rand(60, 255);
-		$ipArr[] = rand(60, 255);
+		$ipArr[] = mt_rand(60, 255);
+		$ipArr[] = mt_rand(60, 255);
+		$ipArr[] = mt_rand(60, 255);
+		$ipArr[] = mt_rand(60, 255);
 		$ip = implode('.',$ipArr);
 		//validate ip
 		while(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === FALSE)
