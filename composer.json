@@ -19,6 +19,3 @@
         "files": ["src/CurLite.php"]
     }
 }
-Skipped branch master, Invalid package information: 
-License "BSD" is not a valid SPDX license identifier, see https://spdx.org/licenses/ if you use an open license.
-If the software is closed-source, you may use "proprietary" as license.
