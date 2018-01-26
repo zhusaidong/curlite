@@ -1,8 +1,8 @@
 <?php
 /**
 * CurLite
-* @author Zsdroid [635925926@qq.com]
-* @version 0.1.1
+* @author zhusaidong [zhusaidong@gmail.com]
+* @version 0.1.2
 */
 namespace CurLite;
 
@@ -19,6 +19,7 @@ class Curl
 	
 	/**
 	* __construct
+	* 
 	* @param Request $request
 	*/
 	public function __construct(Request $request)
@@ -106,7 +107,7 @@ class Curl
 		$result = curl_exec($curl);
 		if($result !== FALSE)
 		{
-			$this->response->body = $result;
+			$this->response->body = trim($result);
 			//if curl successed, the `response->error` will equal `FALSE`.
 			$this->response->error = FALSE;
 		}
@@ -116,7 +117,6 @@ class Curl
 		}
 		$this->response->httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 		curl_close($curl);
-		$this->response->getHeader()->getCookie();
 	}
 }
 
@@ -178,7 +178,7 @@ class Request
 	/**
 	* __construct
 	* @param string $requestUrl Request Url 
-	* @param string $requestMethod Request Method
+	* @param int $requestMethod Request Method
 	*/
 	public function __construct($requestUrl,$requestMethod = self::METHOD_GET)
 	{
@@ -236,11 +236,11 @@ class Response
 	public $error = '';
 	
 	/**
-	* parse header
+	* get server info
 	* 
 	* @return Response
 	*/
-	public function getHeader()
+	public function getServerInfo()
 	{
 		$header = implode("\n",$this->header);
 		preg_match_all('/(.*): (.*)\n/',$header,$data);
@@ -252,7 +252,7 @@ class Response
 		return $this;
 	}
 	/**
-	* parse cookie
+	* get cookie
 	* 
 	* @return Response
 	*/
@@ -262,6 +262,19 @@ class Response
 		preg_match_all('/Set-Cookie:(.*)\n/',$header,$data);
 		$cookie = isset($data[1]) ? $data[1] : [];
 		$this->cookie = trim(implode(';',$data[1]));
+		return $this;
+	}
+	/**
+	* json decode the body
+	* 	if the body is json, use this function to json decode
+	* 
+	* @param boolean $isArray is decode to array, default is TRUE
+	* 
+	* @return Response
+	*/
+	public function jsonBody($isArray = TRUE)
+	{
+		$this->body = json_decode($this->body,$isArray);
 		return $this;
 	}
 }
