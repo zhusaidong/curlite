@@ -1,7 +1,7 @@
 <?php
 /**
 * CurlLite demo
-* @author Zsdroid [635925926@qq.com]
+* @author zhusaidong [zhusaidong@gmail.com]
 */
 require_once './vendor/autoload.php';
 
