@@ -4,7 +4,7 @@
     "keywords": ["light-weight","curl"],
     "homepage": "https://github.com/zhusaidong/curlite",
     "type": "project",
-    "license": "BSD",
+    "license": "BSD-2-Clause",
     "authors": [
         {
             "name": "zhusaidong",
@@ -19,3 +19,6 @@
         "files": ["src/CurLite.php"]
     }
 }
+Skipped branch master, Invalid package information: 
+License "BSD" is not a valid SPDX license identifier, see https://spdx.org/licenses/ if you use an open license.
+If the software is closed-source, you may use "proprietary" as license.
