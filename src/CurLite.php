@@ -30,16 +30,6 @@ class Curl
 		$this->curlExec();
 	}
 	/**
-	* is supported
-	* 
-	* @return boolean
-	*/
-	private function isSupported()
-	{
-		return function_exists("curl_init") ? TRUE : FALSE;
-	}
-	
-	/**
 	* get response object
 	* 
 	* @return Response response
@@ -47,6 +37,16 @@ class Curl
 	public function getResponse()
 	{
 		return $this->response;
+	}
+	
+	/**
+	* is supported
+	* 
+	* @return boolean
+	*/
+	private function isSupported()
+	{
+		return function_exists("curl_init");
 	}
 	/**
 	* curl exec
@@ -58,10 +58,17 @@ class Curl
 		//avoid variable pollution
 		$request = clone $this->request;
 		
-		$this->request->isRandomIP == TRUE and $request->header['CLIENT-IP'] = $request->header['X-FORWARDED-FOR'] = $this->request->getRandomIP();
+		//randomIP
+		$request->isRandomIP and 
+			$request->header['X-REAL-IP'] = 
+			$request->header['CLIENT-IP'] = 
+			$request->header['X-FORWARDED-FOR'] = 
+			$request->getRandomIP();
+		array_walk($request->header,function(&$v,$k){$v = $k.':'.$v;});
+		
 		$request->postFields = is_array($request->postFields) ? http_build_query($request->postFields) : $request->postFields;
 		
-		if($this->request->method === Request::METHOD_POST)
+		if($request->method === Request::METHOD_POST)
 		{
 			curl_setopt($curl, CURLOPT_POST, 1);
 			curl_setopt($curl, CURLOPT_POSTFIELDS, $request->postFields);
@@ -71,24 +78,22 @@ class Curl
 			curl_setopt($curl, CURLOPT_HTTPGET, 1);
 			$request->url .= (strpos('?',$request->url) !== FALSE ? '&' : '?').$request->postFields;
 		}
-		curl_setopt($curl, CURLOPT_URL,$request->url);
+		curl_setopt($curl, CURLOPT_URL, $request->url);
+		
+		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, !empty($request->caPath));
 		if(!empty($request->caPath))
 		{
 			$caPathInfo = pathinfo($request->caPath);
-			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, TRUE);
 			curl_setopt($curl, CURLOPT_CAPATH, $caPathInfo['dirname']);
 			curl_setopt($curl, CURLOPT_CAINFO, $caPathInfo['basename']);
 		}
-		else
-		{
-			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
-		}
 		
-		curl_setopt($curl, CURLOPT_HTTPHEADER,$request->header);
-		curl_setopt($curl, CURLOPT_USERAGENT, $request->userAgent);
-		curl_setopt($curl, CURLOPT_REFERER, $request->referer);
-		curl_setopt($curl, CURLOPT_COOKIE, $request->cookie);
-		curl_setopt($curl, CURLOPT_TIMEOUT, $request->timeout);
+		curl_setopt($curl, CURLOPT_PROXY, 		$request->proxy);
+		curl_setopt($curl, CURLOPT_HTTPHEADER, 	$request->header);
+		curl_setopt($curl, CURLOPT_USERAGENT, 	$request->userAgent);
+		curl_setopt($curl, CURLOPT_REFERER, 	$request->referer);
+		curl_setopt($curl, CURLOPT_COOKIE, 		$request->cookie);
+		curl_setopt($curl, CURLOPT_TIMEOUT, 	$request->timeout);
 		
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 1);
@@ -108,8 +113,6 @@ class Curl
 		if($result !== FALSE)
 		{
 			$this->response->body = trim($result);
-			//if curl successed, the `response->error` will equal `FALSE`.
-			$this->response->error = FALSE;
 		}
 		else
 		{
@@ -174,9 +177,14 @@ class Request
 	* @var $timeout timeout
 	*/
 	public $timeout = 3;
+	/**
+	* @var $proxy proxy like:http://0.0.0.0:000
+	*/
+	public $proxy = '';
 	
 	/**
 	* __construct
+	* 
 	* @param string $requestUrl Request Url 
 	* @param int $requestMethod Request Method
 	*/
@@ -190,12 +198,7 @@ class Request
 	*/
 	public function getRandomIP()
 	{
-		$ipArr = [];
-		$ipArr[] = mt_rand(60, 255);
-		$ipArr[] = mt_rand(60, 255);
-		$ipArr[] = mt_rand(60, 255);
-		$ipArr[] = mt_rand(60, 255);
-		$ip = implode('.',$ipArr);
+		$ip = implode('.',array_map(function(){return mt_rand(60, 255);},range(0,3)));
 		//validate ip
 		while(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === FALSE)
 		{
@@ -232,8 +235,9 @@ class Response
 	public $serverInfo = [];
 	/**
 	* @var $error error
+	* 	if curl successed, the `response->error` will equal `FALSE`.
 	*/
-	public $error = '';
+	public $error = FALSE;
 	
 	/**
 	* get server info
@@ -242,11 +246,8 @@ class Response
 	*/
 	public function getServerInfo()
 	{
-		$header = implode("\n",$this->header);
-		preg_match_all('/(.*): (.*)\n/',$header,$data);
-		$key = isset($data[1]) ? $data[1] : [];
-		$value = isset($data[2]) ? $data[2] : [];
-		$data = array_combine($key,$value);
+		preg_match_all('/(.*): (.*)\n/',implode("\n",$this->header)."\n",$data);
+		$data = array_combine(isset($data[1]) ? $data[1] : [],isset($data[2]) ? $data[2] : []);
 		unset($data['Set-Cookie']);
 		$this->serverInfo = $data;
 		return $this;
@@ -258,17 +259,15 @@ class Response
 	*/
 	public function getCookie()
 	{
-		$header = implode("\n",$this->header)."\n";
-		preg_match_all('/Set-Cookie:(.*)\n/',$header,$data);
-		$cookie = isset($data[1]) ? $data[1] : [];
-		$this->cookie = trim(implode(';',$data[1]));
+		preg_match_all('/Set-Cookie:(.*)\n/',implode("\n",$this->header)."\n",$data);
+		$this->cookie = trim(implode(';',isset($data[1]) ? $data[1] : []));
 		return $this;
 	}
 	/**
 	* json decode the body
-	* 	if the body is json, use this function to json decode
+	* 	if the body is json
 	* 
-	* @param boolean $isArray is decode to array, default is TRUE
+	* @param boolean $isArray is decoded to array, default is TRUE
 	* 
 	* @return Response
 	*/
