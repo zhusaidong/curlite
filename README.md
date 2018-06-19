@@ -6,7 +6,7 @@
 
 ## Usage
 
-```
+```php
 composer require zhusaidong/curlite:dev-master
 ```
 
