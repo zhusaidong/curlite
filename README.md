@@ -15,8 +15,7 @@ composer require zhusaidong/curlite:dev-master
 ```php
 require_once './vendor/autoload.php';
 
-use CurLite\Request,
-	CurLite\Curl;
+use zhusaidong\CurLite\Request,zhusaidong\CurLite\Curl;
 
 $request = new Request('https://github.com/search');
 $request->postFields = ['q'=>'php curl','type'=>''];
