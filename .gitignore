@@ -1,3 +1,5 @@
 /*.csprj
 /*.clpprj
 vendor
+.idea
+composer.lock
