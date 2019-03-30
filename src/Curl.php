@@ -77,11 +77,12 @@ class Curl
 		else
 		{
 			curl_setopt($curl, CURLOPT_HTTPGET, 1);
-			$request->url .= (strpos('?', $request->url) !== FALSE ? '&' : '?') . $request->postFields;
+			!empty($request->postFields) and $request->url .= (strpos($request->url,'?') !== FALSE ? '&' : '?').$request->postFields;
 		}
 		curl_setopt($curl, CURLOPT_URL, $request->url);
 		
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, !empty($request->caPath));
+		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, !empty($request->caPath));
 		if(!empty($request->caPath))
 		{
 			$caPathInfo = pathinfo($request->caPath);
