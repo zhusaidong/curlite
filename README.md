@@ -7,7 +7,7 @@
 ## Usage
 
 ```php
-composer require zhusaidong/curlite:dev-master
+composer require zhusaidong/curlite
 ```
 
 ## Examples
@@ -116,4 +116,9 @@ $caPath = '';
 * @var int $timeout request timeout
 */
 $timeout = 3;
+/**
+ * @var int $followLocation follow the location,
+ *      set it zero can intercept the redirect
+ */
+$followLocation = 1;
 ```
